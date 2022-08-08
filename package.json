@@ -1,0 +1,41 @@
+{
+  "name": "phycat-node",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --config jestconfig.json",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://bitbucket.org/monsradix/phycat-node.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/berge472/poker-range-engine/issues"
+  },
+  "homepage": "https://github.com/berge472/poker-range-engine#README",
+  "devDependencies": {
+    "@babel/core": "^7.18.6",
+    "@babel/preset-env": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/jest": "^28.1.3",
+    "babel-jest": "^28.1.3",
+    "jest": "^28.1.3",
+    "ts-jest": "^28.0.6",
+    "typescript": "^4.7.4"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "poker-odds-calc": "0.0.14",
+    "prange": "^0.2.3",
+    "yaml": "^2.1.1"
+  }
+}
