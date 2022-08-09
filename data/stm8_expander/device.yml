@@ -1,0 +1,181 @@
+---
+name: stm8_expander
+category: Device/IO
+description: Driver for STM8 running custom GPIO expander firmware 
+datasheet: https://www.st.com/resource/en/datasheet/stm8s003f3.pdf
+mfr: UpRev
+mfr_pn: STM8S003F3
+digikey_pn: 497-18052-2-ND
+
+prefix: io  #prefix used in code generation
+bus: I2C, SPI    # defines the buses that can be used to access registers 
+i2c_addr: 0x42   # defines the I2C device address (if device uses I2C)
+
+###########################################################################################################
+#                                   REGISTERS                                                             #
+###########################################################################################################
+
+registers:             
+    
+    - GPIO_IN:         { addr: 0x00 , type: uint32_t, perm: r, desc: Input values for gpio 0-25}     
+    - GPIO_OUT:        { type: uint32_t, perm: rw, desc: Output values for gpio 0-15}
+    - GPIO_DDR:        { type: uint32_t, perm: r, desc: Direction Register for GPIO }                             
+    - IRQ_SRC:         { type: uint32_t, perm: r, desc: 'latching Interrupt source mask. indicates souce of IRQ resets on read'}
+    
+
+    #Creates 5 instances of this register ADC_0_VAL - ADC_4_VAL 
+    - ADC_$n_VAL:       { type: uint16_t, perm: r, desc: Output of ADC $n, count: 5}
+
+
+    - PWM_$n_VAL:       { type: uint16_t, perm: w, desc: PWM value for ch $n, count: 6 }
+
+
+    #Gpio config
+    - GPIO_$n_CFG:      { type: uint8_t, perm: rw, desc: Configuration for GPIO $n, count: 26}   
+   
+
+    #IRQ Config 
+    - IRQ_CFG:         { type: uint16_t, perm: rw, desc: IRQ Configuration}
+
+    #ADC config
+    - ADC_$n_CFG:       {  type: uint16_t, perm: rw, desc: Configuration for ADC $n, count: 5 }
+
+
+    #PWM Config
+    - PWM_CONFIG:      {type: uint32_t, perm: rw, desc: Configuration for PWM }
+    - WHO_AM_I:        {type: uint8_t, perm: rw, default: 0xAB, desc: Device ID }
+    - VERSION:         {type: uint32_t, prem: r, desc: Version of firmware}
+    
+    - EEPROM_MEM:      { addr: 0x70, type: uint8_t, perm: rw, desc: Start address of EEPROM memory on stm8. User can read/write up to 128 bytes starting at this address}
+    
+
+###########################################################################################################
+#                                   Fields                                                                #
+###########################################################################################################
+
+# setting up re-usable chunks
+gpio_dir_vals: &gpio_dir_vals
+        - IN :  { val: 0, desc: GPIO is an input }
+        - OUT : {val: 1, desc: GPIO is an output }
+
+irq_vals: &irq_vals
+        - NONE :    { val: 0b00, desc: No interrupt  }
+        - RISING :  { val: 0b01, desc: Trigger on Rising }
+        - FALLING : { val: 0b10, desc: Trigger on falling }
+        - ANY :     { val: 0b11, desc: Trigger on any }
+
+fields:
+
+    - GPIO_$n_CFG:
+        - DIR: {mask: 0x80, desc: Pin Direction, vals: *gpio_dir_vals }
+        - PP:  {mask: 0x40 , desc: 'Enables Push/Pull on output, and Pull-up on input' }
+        - LL:  
+            mask: 0x10 
+            desc: Low Level
+            vals: 
+                - LOW : {val: 0, desc: Low level output}
+                - HIGH : {val: 1, desc:High level (output push-pull) or HI-Z (output open-drain) }
+        - IRQ: {mask: 0x0C, desc: 'Interrupt selection', vals: *irq_vals }
+        - ALT: {mask: 0x02, desc: 'Indicates that GPIO is disabled because pin is being used for an alternate function (PWM, ADC, etc)'}
+        - EN:  {mask: 0x01, desc: 'Enables GPIO'}
+
+    
+    - ADC_$n_CFG: 
+        - Treshold: {mask: 0xFFF0, desc: IRQ threshold for ADC channel}
+        - IRQ: {mask: 0x000C, desc: 'Interrupt setting for ADC channel', vals: *irq_vals}
+        - EN:  {mask: 0x0001, desc: Enables ADC Channel}
+
+    - IRQ_CFG:
+        - Enabled:
+            bit: 15
+            desc: Enables IRQ signal on selected GPIO 
+        - Polarity:
+            bit: 14
+            desc: Sets polarity of IRQ 
+            vals: 
+                - ACTIVE_HIGH : {val: 0x01, desc: GPIO is high when IRQ is pending}
+                - ACTIVE_LOW  : {val: 0x00, desc: GPIO is low when IRQ is pending}   
+        - Output:
+            mask: 0b011111
+            desc: Selects the GPIO to use for IRQ 
+
+
+    - IRQ_SRC:
+        - IRQ_SRC:
+            mask: 0xFFFFFFFF
+            desc: Source of IRQ 
+            vals: 
+                - GPIO_0 :  {val: 0x00000001, desc: IRQ triggered by GPIO0 }
+                - ADC_0 :   {val: 0x04000000, desc: IRQ triggered by ADC0 }
+                - ADC_1 :   {val: 0x08000000, desc: IRQ triggered by ADC1 }
+                - ADC_2 :   {val: 0x10000000, desc: IRQ triggered by ADC2 }
+                - ADC_3 :   {val: 0x20000000, desc: IRQ triggered by ADC3 }
+                - ADC_4 :   {val: 0x40000000, desc: IRQ triggered by ADC4 }
+               
+
+    - PWM_CONFIG: 
+        - Period:    {mask: 0xFFFF0000, desc: Period for PWM signals}
+        - Prescaler: 
+            mask: 0x0000F000
+            desc: Prescaler for PWM, using 16Mhz clock
+            vals:
+                - PRESCALER_1     : { val: 0x00, desc: divide clock by 1 (16Mhz) }
+                - PRESCALER_2     : { val: 0x01, desc: divide clock by 2 (8Mhz)   }
+                - PRESCALER_4     : { val: 0x02, desc: divide clock by 4  (4Mhz)   }
+                - PRESCALER_8     : { val: 0x03, desc: divide clock by 8  (2Mhz)   }
+                - PRESCALER_16    : { val: 0x04, desc: divide clock by 16  (1Mhz)   }
+                - PRESCALER_32    : { val: 0x05, desc: divide clock by 32  (500Khz)   }
+                - PRESCALER_64    : { val: 0x06, desc: divide clock by 64  (250Khz)   }
+                - PRESCALER_128   : { val: 0x07, desc: divide clock by 128 (125Khz)   }
+                - PRESCALER_256   : { val: 0x08, desc: divide clock by 256 (62.5 Khz)   }
+                - PRESCALER_512   : { val: 0x09, desc: divide clock by 512  (31.25 Khz)   }
+                - PRESCALER_1024  : { val: 0x0A, desc: divide clock by 1024 (1.5625 KHz)   }
+                - PRESCALER_2048  : { val: 0x0B, desc: divide clock by 2048  ()   }
+                - PRESCALER_4096  : { val: 0x0C, desc: divide clock by 4096  ()   }
+                - PRESCALER_8192  : { val: 0x0D, desc: divide clock by 8192  ()   }
+                - PRESCALER_16384 : { val: 0x0E, desc: divide clock by 16384 ()   }
+                - PRESCALER_32768 : { val: 0x0F, desc: divide clock by 32768 ()   }
+        - CH0_Enable: { bit: 0, desc: Enables PWM channel 0 }
+        - CH1_Enable: { bit: 1, desc: Enables PWM channel 1 }
+        - CH2_Enable: { bit: 2, desc: Enables PWM channel 2 }
+        - CH3_Enable: { bit: 3, desc: Enables PWM channel 3 }
+        - CH4_Enable: { bit: 4, desc: Enables PWM channel 4 }
+        - CH5_Enable: { bit: 5, desc: Enables PWM channel 5 }
+        - CH6_Enable: { bit: 6, desc: Enables PWM channel 6 }
+        - CH7_Enable: { bit: 7, desc: Enables PWM channel 7 }
+
+    - WHO_AM_I:
+        - ID: 
+            desc: ID of device 
+            vals:
+              - STM8S003F3: {val: 0x70, desc: 20 pin variant}
+              - STM8S003K3: {val: 0x71, desc: 32 pin variant}
+    
+    - VERSION:
+        - MAJOR: 
+            desc: Major Version 
+            mask: 0xFF000000
+        - MINOR: 
+            desc: Major Version 
+            mask: 0x00FF0000
+        - PATCH: 
+            desc: Major Version 
+            mask: 0x0000FF00
+        - BUILD: 
+            desc: Major Version 
+            mask: 0x000000FF
+    
+
+
+
+
+
+
+###########################################################################################################
+#                                   Preset Configs                                                        #
+###########################################################################################################
+
+
+
+
+

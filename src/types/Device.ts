@@ -4,6 +4,7 @@
  * 
  */
 
+import { DeviceDesc } from "./DeviceDesc";
 import { Register } from "./Register";
 
 export class Device {
@@ -23,5 +24,12 @@ export class Device {
     
     datasheet?: string; 
     digikey_pn?: string;
+
+    desc: DeviceDesc;
+
+    constructor( obj: any)
+    {
+        this.desc = new DeviceDesc(obj.descriptor);
+    }
 
 }

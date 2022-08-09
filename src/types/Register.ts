@@ -1,3 +1,4 @@
+import { RegDesc } from "./RegDesc";
 
 export class Register {
 
@@ -6,8 +7,15 @@ export class Register {
     type: string = ''; 
     perm: string = '';
     default: number = 0; 
-    valide = false;
+    valid = false;
     fields: RegisterField[] = [];
+    desc: RegDesc;
+
+
+    constructor( json: any)
+    {
+        this.desc = json.descriptor; 
+    }
 
     
 }
