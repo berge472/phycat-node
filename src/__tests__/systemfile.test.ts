@@ -9,9 +9,7 @@ test('System File', ()=>{
 
     let newSys = new System();
 
-    newSys.loadFromFile('./data/system.yml');
-
-
+    newSys.loadFromFile('./data/test/system.yml');
 
 
 })

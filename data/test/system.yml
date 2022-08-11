@@ -1,0 +1,87 @@
+---
+name: example_system 
+
+
+
+signals:
+  - { name: hts221_cs,  pin: 1, mode: input }
+  - { name: io2 ,       pin: 2, mode: input }
+  - { name: io3 ,       pin: 3, mode: output, hiz: true }
+  - { name: i2c_0_sda,  pin: 4, mode: alt}
+  - { name: i2c_0_scl,  pin: 5, mode: alt}
+  - { name: i2c_1_sda,  pin: 6, mode: alt}
+  - { name: i2c_1_scl,  pin: 7, mode: alt}
+  - { name: spi_0_sck,  pin: 8, mode: alt}
+  - { name: spi_0_mosi,  pin: 9, mode: alt}
+  - { name: spi_0_miso,  pin: 10, mode: alt}
+
+
+buses: 
+  - type: I2C 
+    name: i2c_0
+    mode: listen
+    signals:
+      - sda: i2c_0_sda
+      - scl: i2c_0_scl
+
+  - type: I2C 
+    name: i2c_1
+    mode: master
+    signals:
+      - sda: i2c_1_sda
+      - scl: i2c_1_scl
+
+  - type: SPI
+    name: spi_0
+    mode: listen
+    signals:
+      - sck: spi_0_sck
+      - mosi: spi_0_mosi
+      - miso: spi_0_miso
+  
+devices: 
+
+  - name: STM32 
+    package: QFN48
+    interfaces: 
+      - name: SPI0
+        bus: spi_0
+        role: master
+      - name: I2C0 
+        bus: i2c_0
+        role: master 
+      - name: nRST 
+        signal: io2
+        dir: out
+
+
+  - name: HTS221 
+    path: hts221/device.yml 
+    interfaces:
+      - bus: spi_0
+        cs: hts221_cs
+        # slave role is inferred by having a cs  
+        #role: slave 
+
+  - name: HTS221_2
+    path: hts221/device.yml 
+    interfaces:
+      - name: I2C 
+        bus: i2c_0 
+        role: slave 
+    
+
+  - name: stm8_expander 
+    path: stm8_expander/device.yml 
+    bus: i2c_0 
+
+  - name: accel 
+    url: https://bitbucket.org/uprev/device-lis2dh12/raw/035e3c029e6dd1408ebaf7df5b357b4b1feefb7a/device.yml
+    bus: i2c_0 
+    addr: 0x30
+
+  
+
+
+
+

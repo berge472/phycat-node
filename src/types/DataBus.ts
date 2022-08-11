@@ -7,12 +7,23 @@ export class DataBus{
     name: string = ''; 
     type: string = '';
 
+    signals: Signal[] = [];
     devices: Device[] = [];
     channels: DataChannel[] = [];
 
-    constructor( )
+    constructor( obj: any )
     {
+        this.name = obj.name;
+        this.type = obj.type;
 
+        if(obj.signals)
+        {
+            
+            obj.signals.forEach((s : any) => {
+                this.signals.push(new Signal(s));
+            });
+        }
+        
     }
 
     handleFrame(frame: number) : void
@@ -31,6 +42,31 @@ export class DataBus{
         })
 
         return false;
+    }
+
+    getDeviceNames() : string[]
+    {
+        let arrNames:string[] = []
+
+        this.devices.forEach((d)=>{
+            arrNames.push(d.name);
+        })
+
+        return arrNames;
+    }
+}
+
+export class Signal{
+
+    name: string; 
+    id: number; 
+
+    constructor(obj: any )
+    {
+
+        //Normalize 
+        this.name = Object.keys(obj)[0];
+        this.id = obj[this.name];
     }
 }
 

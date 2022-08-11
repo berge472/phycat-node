@@ -1,20 +1,22 @@
-import { RegDesc } from "./RegDesc";
+import { RegDesc , RegFieldDesc } from "./DeviceDesc";
+
 
 export class Register {
 
-    name: string ='';
-    addr: number = 0; 
-    type: string = ''; 
-    perm: string = '';
-    default: number = 0; 
+
     valid = false;
     fields: RegisterField[] = [];
+    value?: number;
     desc: RegDesc;
 
 
-    constructor( json: any)
+    constructor( desc: RegDesc)
     {
-        this.desc = json.descriptor; 
+        this.desc = desc;
+
+        this.desc.fields.forEach((f: any) => {
+            this.fields.push(new RegisterField(f));
+        });
     }
 
     
@@ -22,29 +24,12 @@ export class Register {
 
 export class RegisterField{
     
-
-    name: string =''; 
-    desc?: string; 
-    value: number = 0;
-    
-    
-    mask = 0x00000000; 
-    offset = 0;
-    parent: Register; 
-    format = 'hex'
-    fieldValues: FieldValue[] = [];
+    desc?: RegFieldDesc; 
+    value?: number;
 
 
-    constructor(parent : Register)
+    constructor(desc: RegFieldDesc)
     {
-        this.parent = parent;
+        this.desc = desc;
     }
-}
-
-export class FieldValue{
-
-    name: string = '';
-    val: number = 0; 
-    desc: string = '';
-
 }
